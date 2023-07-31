@@ -5,9 +5,11 @@ import io from "socket.io-client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleUser, faPaperPlane } from "@fortawesome/free-regular-svg-icons";
 
-// const socket = io.connect("http://localhost:9000");
+const socket = io.connect("http://localhost:9000");
 
 function App() {
+  const [pesan, setPesan] = useState("");
+  const [messages, setMessages] = useState([]);
   // const onSendMessage = () => {
   //   // socket.emit("send_message", { message: pesan });
   //   console.log(pesan);
@@ -24,32 +26,45 @@ function App() {
   //   });
   // };
 
-  // useEffect(() => {
-  //   socket.on("receive_message", (data) => {
-  //     console.log("from socket", data);
-  //     setMessage((prev) => [
-  //       ...prev,
-  //       {
-  //         message: data.message,
-  //       },
-  //     ]);
-  //   });
+  useEffect(() => {
+    socket.on("receive_message", (data) => {
+      console.log("from socket", data);
+      setMessages((prev) => [
+        ...prev,
+        {
+          message: data.message,
+        },
+      ]);
+    });
 
-  //   socket.on("receive_counter", (data) => {
-  //     console.log(data.number);
-  //     setCounter(data.number);
-  //   });
+    // socket.on("receive_counter", (data) => {
+    //   console.log(data.number);
+    //   setCounter(data.number);
+    // });
 
-  //   // Remove event listener on component unmount
-  //   return () => {
-  //     socket.off("receive_message");
-  //     socket.off("receive_counter");
-  //   };
-  // }, []);
+    // Remove event listener on component unmount
+    return () => {
+      socket.off("receive_message");
+      // socket.off("receive_counter");
+    };
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("submitted");
+    console.log(pesan);
+    fetch("http://localhost:9000/chat/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: pesan,
+        sender: pesan,
+        room: pesan,
+      }),
+    });
+    setPesan("");
   };
 
   return (
@@ -88,10 +103,26 @@ function App() {
                 <small className="block mt-2 text-left font-bold text-xxs">10:32</small>
               </div>
             </div>
+            {messages.map((message, index) => {
+              return (
+                <div className="flex justify-end" key={index}>
+                  <div className="bg-grey-bubble rounded-xl max-w-[50%] m-5 px-4 pt-4 pb-2 relative before:w-0 after:h-0 after:border-l-transparent after:border-r-transparent after:border-t-transparent after:border-b-grey-bubble after:border-[10px] after:absolute after:right-[-10px] after:bottom-0">
+                    <p>{message.message}</p>
+                    <small className="block mt-2 text-left font-bold text-xxs">10:32</small>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div className="bg-red-active text-white font-bold py-4 rounded-xl">
             <form className="flex mx-4" onSubmit={(e) => handleSubmit(e)}>
-              <input type="text" placeholder="Typing Here..." className="rounded text-grey-text bg-grey-input font-normal grow focus:outline-none mr-2 p-2" />
+              <input
+                type="text"
+                value={pesan}
+                onChange={(e) => setPesan(e.target.value)}
+                placeholder="Typing Here..."
+                className="rounded text-grey-text bg-grey-input font-normal grow focus:outline-none mr-2 p-2"
+              />
               <button type="submit">
                 <svg style={{ fill: "white" }} xmlns="http://www.w3.org/2000/svg" height="36px" viewBox="0 0 24 24" width="36px" fill="#000000">
                   <path d="M0 0h24v24H0z" fill="none" />
